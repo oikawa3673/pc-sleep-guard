@@ -4,7 +4,7 @@
 Add-Type -AssemblyName System.Drawing
 
 $src = 'C:\Users\3673\Desktop\Designer.png'
-$dst = 'C:\Users\3673\Desktop\.claude\projects\スリープ防止ツール\_作業ファイル\app.ico'
+$dst = 'C:\Users\3673\Desktop\AI作業用\03_社内業務自動化\PCスリープガード\_作業ファイル\app.ico'
 
 $orig = [System.Drawing.Bitmap]::FromFile($src)
 
