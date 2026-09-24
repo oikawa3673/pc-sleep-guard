@@ -41,6 +41,7 @@ public class SleepGuard : Form
     bool isOn;
     DateTime startAt;
     Icon AppIcon;
+    Icon IconOn, IconOff;   // トレイ用。切り替えのたびに作るとアイコンのハンドルが溜まるので最初に2つだけ作る
 
     // exe自身に埋め込まれたアイコンを取り出す（別ファイルを同梱せずに済む）
     static Icon LoadAppIcon()
@@ -87,8 +88,11 @@ public class SleepGuard : Form
         btn.Click += delegate { Toggle(!isOn); };
         Controls.Add(btn);
 
+        IconOff = MakeIcon(Color.Gray);
+        IconOn  = MakeIcon(Green);
+
         tray = new NotifyIcon();
-        tray.Icon = Icon;
+        tray.Icon = IconOff;              // 起動直後も README どおり「灰色＝OFF」
         tray.Text = "PCスリープガード: OFF";
         tray.Visible = true;
         ContextMenuStrip menu = new ContextMenuStrip();
@@ -145,7 +149,7 @@ public class SleepGuard : Form
             btn.Text = "OFF にする";
             btn.BackColor = Red;
             tray.Text = "PCスリープガード: ON";
-            tray.Icon = MakeIcon(Green);
+            tray.Icon = IconOn;
         }
         else
         {
@@ -157,7 +161,7 @@ public class SleepGuard : Form
             btn.Text = "ON にする";
             btn.BackColor = Blue;
             tray.Text = "PCスリープガード: OFF";
-            tray.Icon = MakeIcon(Color.Gray);
+            tray.Icon = IconOff;
         }
         Trim();
     }
