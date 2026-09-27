@@ -3,9 +3,14 @@
 PCが勝手に**スリープ・画面OFF・スクリーンセーバー(自動ロック)**になるのを、**ONの間だけ**抑止する常駐アプリ。
 Claude Code などにPC操作をさせている途中で止まる／デモ中に画面が消えるのを防ぐのが目的。
 
-- **本体＝直下 `PCスリープガード.exe`**（9.5KB・単体で動く。追加ランタイム不要）
-- **他PCへの配布＝直下 `PCスリープガード_配布用.zip`**（7.3KB）
-- 配布物の中身は `_配布用/`、ソースと旧版は `_作業ファイル/`
+- **本体＝直下 `PCスリープガード.exe`**（約180KB。うち約170KBは埋め込みアイコン。単体で動く・追加ランタイム不要）
+- **他PCへの配布＝直下 `PCスリープガード_配布用.zip`**（約180KB）
+- 配布物の中身は `_配布用/`、ソースと旧版（PowerShell 版 `スリープ防止.ps1/.vbs`）は `_作業ファイル/`
+
+> ⚠ **要確認: 配布物（exe・zip）は GitHub Release へ移す。次のリリースからリポジトリには置かない**
+> （hub `横断ノウハウ/リポジトリ衛生.md`）。`.gitignore` に `*.exe` / `*.zip` を足した。
+> いまリポジトリにある exe・zip（v1.0.0・2026-08-15 ビルド）は消していない＝履歴も書き換えない。消すかどうかはユーザー判断。
+> 2026-09-24 にソースを直した（トレイアイコンの作り直しをやめた）ため、**リポジトリの exe はソースより1つ古い**。次のビルドで揃う
 
 ## 使い方
 
@@ -39,7 +44,7 @@ Claude Code などにPC操作をさせている途中で止まる／デモ中に
 |---|---|
 | メモリ | **約6MB**（旧PowerShell版は約60MB） |
 | 待機中CPU | ほぼ0%（**OFFの間はタイマー自体を停止**） |
-| exeサイズ | 9.5KB |
+| exeサイズ | 約180KB（アイコン抜きの本体は約10KB） |
 
 低負荷にするため、PowerShell+WinFormsをやめてC#でネイティブexe化し、
 状態変化のたびに `SetProcessWorkingSetSize` でワーキングセットをOSへ返している。
@@ -56,9 +61,15 @@ Windows標準のC#コンパイラを使う（Visual Studio不要）。
 
 ```
 C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:winexe /optimize+ ^
+  /win32icon:_作業ファイル\app.ico ^
   /out:PCスリープガード.exe /reference:System.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll ^
   _作業ファイル\SleepGuard.cs
 ```
+
+- `/win32icon` を付けないとアイコンが入らず、ウィンドウ・トレイが既定のアイコンになる（本体はそれを exe から取り出して使う）
+- アイコンを作り直すときは `_作業ファイル\make_icon.ps1 -Src <元画像.png>`（出力は `_作業ファイル\app.ico`）
+- 配布 zip は `_配布用\` の4ファイル（exe・README.txt・インストール.bat・アンインストール.bat）を固めたもの。
+  版数を上げるときは README.md・`_配布用\README.txt`・`インストール.bat` の `DisplayVersion` の3か所を揃える
 
 ## 開発メモ（ハマったところ）
 

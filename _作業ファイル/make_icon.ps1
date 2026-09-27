@@ -1,10 +1,16 @@
-﻿# Designer.png から マルチサイズ .ico を生成する
+﻿# 元画像(PNG) から マルチサイズ .ico を生成する
 # ・四隅の白い余白を透過にする
-# ・16/24/32/48/64/128/256 px を1つのicoに束ねる（PNG圧縮формат）
+# ・16/24/32/48/64/128/256 px を1つのicoに束ねる（PNG圧縮形式）
+# 使い方: powershell -NoProfile -ExecutionPolicy Bypass -File make_icon.ps1 -Src <元画像.png>
+#         出力は既定でこのスクリプトと同じフォルダの app.ico（-Dst で変更可）
+param(
+    [Parameter(Mandatory = $true)][string]$Src,
+    [string]$Dst = (Join-Path $PSScriptRoot 'app.ico')
+)
 Add-Type -AssemblyName System.Drawing
 
-$src = 'C:\Users\3673\Desktop\Designer.png'
-$dst = 'C:\Users\3673\Desktop\AI作業用\03_社内業務自動化\PCスリープガード\_作業ファイル\app.ico'
+# PowerShell の変数名は大文字小文字を区別しないので、以下の $src / $dst は引数そのもの
+$src = (Resolve-Path $Src).Path
 
 $orig = [System.Drawing.Bitmap]::FromFile($src)
 
