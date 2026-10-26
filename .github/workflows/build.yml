@@ -1,0 +1,77 @@
+# 配布用 zip を Windows でビルドする（手動起動のみ）。
+# README の csc コマンドと同じ手順で exe を作り、_配布用 の4ファイルを zip に固めて Artifacts に置く。
+# Release への添付・Box への保存は人が行う（このワークフローは Release を作らない）。
+name: 配布用zipのビルド
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "版数（例 1.0.1）。README.md・_配布用/README.txt・インストール.bat と一致しないと止める"
+        required: true
+        default: "1.0.1"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 版数が3か所で揃っているか確かめる
+        env:
+          VER: ${{ inputs.version }}
+        run: |
+          $sjis = [System.Text.Encoding]::GetEncoding(932)
+          $checks = @(
+            @{ Path = 'README.md';                Text = [IO.File]::ReadAllText('README.md', [Text.Encoding]::UTF8); Want = "# PCスリープガード v$env:VER" },
+            @{ Path = '_配布用/README.txt';       Text = [IO.File]::ReadAllText('_配布用/README.txt', $sjis);       Want = "PCスリープガード  v$env:VER" },
+            @{ Path = '_配布用/インストール.bat'; Text = [IO.File]::ReadAllText('_配布用/インストール.bat', $sjis); Want = "/d `"$env:VER`"" }
+          )
+          $ng = $false
+          foreach ($c in $checks) {
+            if ($c.Text.Contains($c.Want)) { Write-Host "OK  $($c.Path)" }
+            else { Write-Host "::error::$($c.Path) に「$($c.Want)」がありません"; $ng = $true }
+          }
+          if ($ng) { exit 1 }
+
+      - name: exe をビルドする（README と同じ csc）
+        run: |
+          $csc = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+          & $csc /nologo /target:winexe /optimize+ `
+            /win32icon:_作業ファイル\app.ico `
+            /out:_配布用\PCスリープガード.exe `
+            /reference:System.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll `
+            _作業ファイル\SleepGuard.cs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $size = (Get-Item '_配布用\PCスリープガード.exe').Length
+          Write-Host "exe: $size bytes"
+          if ($size -lt 100000) { Write-Host "::error::exe が小さすぎます（アイコンが入っていない可能性）"; exit 1 }
+
+      - name: zip に固める
+        env:
+          VER: ${{ inputs.version }}
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          # README.txt は Windows のメモ帳で読めるよう CRLF にそろえる（Shift-JIS のバイト列はそのまま）
+          $b = [IO.File]::ReadAllBytes('_配布用\README.txt')
+          $t = [Text.Encoding]::GetEncoding(28591).GetString($b) -replace "`r?`n", "`r`n"
+          [IO.File]::WriteAllBytes('_配布用\README.txt', [Text.Encoding]::GetEncoding(28591).GetBytes($t))
+          $files = '_配布用\PCスリープガード.exe', '_配布用\README.txt', '_配布用\インストール.bat', '_配布用\アンインストール.bat'
+          $zip = "out\PCSleepGuard_v$env:VER.zip"
+          Compress-Archive -Path $files -DestinationPath $zip -CompressionLevel Optimal
+          Get-FileHash $zip -Algorithm SHA256 | Format-List
+          Get-FileHash '_配布用\PCスリープガード.exe' -Algorithm SHA256 | Format-List
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PCSleepGuard_v${{ inputs.version }}
+          path: out/PCSleepGuard_v${{ inputs.version }}.zip
+          retention-days: 14
+          if-no-files-found: error
