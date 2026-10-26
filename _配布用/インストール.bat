@@ -36,7 +36,7 @@ del "%VBS%" >nul 2>nul
 rem 「設定＞アプリ」からアンインストールできるよう登録（管理者権限は不要）
 set "KEY=HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\SleepGuardApp"
 reg add "%KEY%" /v DisplayName     /t REG_SZ /d "PCスリープガード" /f >nul
-reg add "%KEY%" /v DisplayVersion  /t REG_SZ /d "1.0.0" /f >nul
+reg add "%KEY%" /v DisplayVersion  /t REG_SZ /d "1.0.1" /f >nul
 reg add "%KEY%" /v Publisher       /t REG_SZ /d "SleepGuard" /f >nul
 reg add "%KEY%" /v InstallLocation /t REG_SZ /d "%DEST%" /f >nul
 reg add "%KEY%" /v DisplayIcon     /t REG_SZ /d "%DEST%\PCスリープガード.exe" /f >nul
